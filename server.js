@@ -14,9 +14,11 @@ const io = new Server(server, {
   maxHttpBufferSize: 100_000,
 });
 
-const WORDS_PATH = path.join(__dirname, "data", "ukrainian_words.csv");
+const ENGLISH_WORDS_PATH = path.join(__dirname, "data", "alias_words_1000.csv");
+const UKRAINIAN_WORDS_PATH = path.join(__dirname, "data", "ukrainian_words.csv");
 const DEFAULT_ROUND_SECONDS = 60;
 const DIFFICULTIES = new Set(["easy", "normal"]);
+const WORD_MODES = new Set(["english_easy", "english_medium", "ukrainian_mixed"]);
 const publicDirectory = path.join(__dirname, "public");
 const rooms = new Map();
 
@@ -42,8 +44,8 @@ function parseCsvLine(line) {
   return values;
 }
 
-function loadWords() {
-  const lines = fs.readFileSync(WORDS_PATH, "utf8").replace(/^\uFEFF/, "").split(/\r?\n/);
+function loadUkrainianWords() {
+  const lines = fs.readFileSync(UKRAINIAN_WORDS_PATH, "utf8").replace(/^\uFEFF/, "").split(/\r?\n/);
   const words = lines
     .slice(1)
     .map((line) => line.trim())
@@ -58,16 +60,26 @@ function loadWords() {
   return words;
 }
 
-const WORDS = loadWords();
+function loadEnglishWords() {
+  return fs.readFileSync(ENGLISH_WORDS_PATH, "utf8")
+    .replace(/^\uFEFF/, "")
+    .split(/\r?\n/)
+    .slice(1)
+    .map((word) => word.trim())
+    .filter(Boolean);
+}
 
-if (WORDS.length === 0) {
+const ENGLISH_WORDS = loadEnglishWords();
+const UKRAINIAN_WORDS = loadUkrainianWords();
+
+if (ENGLISH_WORDS.length === 0 || UKRAINIAN_WORDS.length === 0) {
   throw new Error("The word deck is empty.");
 }
 
 app.disable("x-powered-by");
 app.use(express.static(publicDirectory, { extensions: ["html"] }));
 app.get("/health", (_request, response) => {
-  response.json({ ok: true, rooms: rooms.size, words: WORDS.length });
+  response.json({ ok: true, rooms: rooms.size, words: ENGLISH_WORDS.length + UKRAINIAN_WORDS.length });
 });
 
 function sanitizeName(value) {
@@ -150,7 +162,7 @@ function publicStateFor(room, player) {
         roundCorrect: room.game.roundCorrect,
         roundSkipped: room.game.roundSkipped,
         roundDelta: room.game.roundCorrect - room.game.roundSkipped,
-        endsAt: room.game.endsAt,
+        remainingMs: room.game.endsAt ? Math.max(0, room.game.endsAt - Date.now()) : null,
         lastRound: room.game.lastRound,
         word: room.phase === "playing" && isExplainer ? room.game.currentWord : null,
       }
@@ -185,7 +197,7 @@ function emitRoomState(room) {
 
 function nextWord(room) {
   if (room.game.deckIndex >= room.game.deck.length) {
-    room.game.deck = makeDeck(room.settings.difficulty);
+    room.game.deck = makeDeck(room.settings.wordMode);
     room.game.deckIndex = 0;
   }
   const word = room.game.deck[room.game.deckIndex];
@@ -193,8 +205,14 @@ function nextWord(room) {
   return word;
 }
 
-function makeDeck(difficulty) {
-  return shuffle(WORDS.filter((entry) => entry.difficulty === difficulty).map((entry) => entry.word));
+function makeDeck(wordMode) {
+  if (wordMode === "english_easy") {
+    return shuffle(ENGLISH_WORDS.filter((word) => word.length <= 6));
+  }
+  if (wordMode === "english_medium") {
+    return shuffle(ENGLISH_WORDS.filter((word) => word.length > 6));
+  }
+  return shuffle(UKRAINIAN_WORDS.map((entry) => entry.word));
 }
 
 function endRound(room) {
@@ -283,7 +301,7 @@ io.on("connection", (socket) => {
       lastActiveAt: Date.now(),
       cleanupTimer: null,
       phase: "lobby",
-      settings: { roundSeconds: DEFAULT_ROUND_SECONDS, totalRounds: 6, difficulty: "easy" },
+      settings: { roundSeconds: DEFAULT_ROUND_SECONDS, totalRounds: 6, wordMode: "english_easy" },
       players: [player],
       game: null,
     };
@@ -339,10 +357,10 @@ io.on("connection", (socket) => {
 
     const roundSeconds = Number(payload?.roundSeconds);
     const totalRounds = Number(payload?.totalRounds);
-    const difficulty = String(payload?.difficulty || "");
-    if ([30, 45, 60, 90].includes(roundSeconds)) room.settings.roundSeconds = roundSeconds;
+    const wordMode = String(payload?.wordMode || "");
+    if ([30, 60, 90].includes(roundSeconds)) room.settings.roundSeconds = roundSeconds;
     if ([4, 6, 8, 10].includes(totalRounds)) room.settings.totalRounds = totalRounds;
-    if (DIFFICULTIES.has(difficulty)) room.settings.difficulty = difficulty;
+    if (WORD_MODES.has(wordMode)) room.settings.wordMode = wordMode;
     callback({ ok: true });
     emitRoomState(room);
   });
@@ -369,7 +387,7 @@ io.on("connection", (socket) => {
       currentWord: null,
       endsAt: null,
       lastRound: null,
-      deck: makeDeck(room.settings.difficulty),
+      deck: makeDeck(room.settings.wordMode),
       deckIndex: 0,
       timer: null,
     };
@@ -468,5 +486,5 @@ io.on("connection", (socket) => {
 
 server.listen(PORT, () => {
   console.log(`ClueWave is running at http://localhost:${PORT}`);
-  console.log(`Loaded ${WORDS.length} Ukrainian words.`);
+  console.log(`Loaded ${ENGLISH_WORDS.length} English and ${UKRAINIAN_WORDS.length} Ukrainian words.`);
 });

@@ -19,6 +19,7 @@ const playerTemplate = document.querySelector("#playerTemplate");
 const SESSION_KEY = "clueWaveSession";
 let roomState = null;
 let countdownInterval = null;
+let countdownDeadline = null;
 let toastTimeout = null;
 let pendingRejoin = false;
 
@@ -179,7 +180,7 @@ function renderLobby() {
   const settingsGrid = createElement("div", "settings-grid");
   const durationLabel = createElement("label", "", "Round time");
   const durationSelect = createElement("select");
-  [30, 45, 60, 90].forEach((value) => {
+  [30, 60, 90].forEach((value) => {
     const option = createElement("option", "", `${value} seconds`);
     option.value = String(value);
     option.selected = roomState.settings.roundSeconds === value;
@@ -200,20 +201,21 @@ function renderLobby() {
   roundsSelect.disabled = !roomState.isHost;
   roundsLabel.append(roundsSelect);
 
-  const difficultyLabel = createElement("label", "", "Word difficulty");
-  const difficultySelect = createElement("select");
+  const wordModeLabel = createElement("label", "", "Word set");
+  const wordModeSelect = createElement("select");
   [
-    ["easy", "Easy"],
-    ["normal", "Normal"],
+    ["english_easy", "English · Easy"],
+    ["english_medium", "English · Medium"],
+    ["ukrainian_mixed", "Ukrainian · Easy & Medium"],
   ].forEach(([value, label]) => {
     const option = createElement("option", "", label);
     option.value = value;
-    difficultySelect.append(option);
+    wordModeSelect.append(option);
   });
-  difficultySelect.value = roomState.settings.difficulty || "easy";
-  difficultySelect.disabled = !roomState.isHost;
-  difficultyLabel.append(difficultySelect);
-  settingsGrid.append(durationLabel, roundsLabel, difficultyLabel);
+  wordModeSelect.value = roomState.settings.wordMode || "english_easy";
+  wordModeSelect.disabled = !roomState.isHost;
+  wordModeLabel.append(wordModeSelect);
+  settingsGrid.append(durationLabel, roundsLabel, wordModeLabel);
   settingsColumn.append(settingsGrid);
   settingsColumn.append(createElement("p", "settings-note", "Classic scoring: +1 for a correct word and −1 for a skip. The explainer changes every round."));
 
@@ -221,12 +223,12 @@ function renderLobby() {
     emitWithFeedback("update-settings", {
       roundSeconds: Number(durationSelect.value),
       totalRounds: Number(roundsSelect.value),
-      difficulty: difficultySelect.value,
+      wordMode: wordModeSelect.value,
     });
   };
   durationSelect.addEventListener("change", updateSettings);
   roundsSelect.addEventListener("change", updateSettings);
-  difficultySelect.addEventListener("change", updateSettings);
+  wordModeSelect.addEventListener("change", updateSettings);
   lobbyGrid.append(playerColumn, settingsColumn);
   card.append(lobbyGrid);
 
@@ -250,8 +252,12 @@ function renderLobby() {
 function addRoundMeta(card) {
   const meta = createElement("div", "round-meta");
   meta.append(createElement("span", "", `Round ${roomState.game.round} of ${roomState.game.totalRounds}`));
-  const difficulty = roomState.settings.difficulty === "normal" ? "Normal" : "Easy";
-  meta.append(createElement("span", "", `${roomState.settings.roundSeconds}s · ${difficulty}`));
+  const modeLabels = {
+    english_easy: "English · Easy",
+    english_medium: "English · Medium",
+    ukrainian_mixed: "Ukrainian · Mixed",
+  };
+  meta.append(createElement("span", "", `${roomState.settings.roundSeconds}s · ${modeLabels[roomState.settings.wordMode] || "English · Easy"}`));
   card.append(meta);
 }
 
@@ -286,8 +292,8 @@ function renderRoundIntro() {
 function updateTimer() {
   const timerNumber = document.querySelector("#timerNumber");
   const timerFill = document.querySelector("#timerFill");
-  if (!timerNumber || !timerFill || !roomState?.game?.endsAt) return;
-  const remainingMs = Math.max(0, roomState.game.endsAt - Date.now());
+  if (!timerNumber || !timerFill || countdownDeadline === null) return;
+  const remainingMs = Math.max(0, countdownDeadline - performance.now());
   const remainingSeconds = Math.ceil(remainingMs / 1000);
   const ratio = Math.max(0, Math.min(1, remainingMs / (roomState.settings.roundSeconds * 1000)));
   timerNumber.textContent = `${remainingSeconds}s`;
@@ -495,6 +501,9 @@ socket.on("connect", () => {
 socket.on("disconnect", () => setConnectionStatus(false));
 
 socket.on("room-state", (state) => {
+  countdownDeadline = state.phase === "playing" && Number.isFinite(state.game?.remainingMs)
+    ? performance.now() + state.game.remainingMs
+    : null;
   roomState = state;
   const session = getSession();
   const self = state.players.find((player) => player.isSelf);
