@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1677ff" />
+    <meta name="description" content="A private real-time word guessing game for two people." />
+    <title>ClueWave — A word game for two</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="background-orb orb-one"></div>
+    <div class="background-orb orb-two"></div>
+
+    <main class="app-shell">
+      <header class="site-header">
+        <a class="brand" href="/" aria-label="ClueWave home">
+          <span class="brand-mark" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </span>
+          <span>ClueWave</span>
+        </a>
+        <div id="connectionBadge" class="connection-badge is-online">
+          <span class="status-dot"></span>
+          <span class="connection-label">Connected</span>
+        </div>
+      </header>
+
+      <section id="homeView" class="view home-view">
+        <div class="hero-copy">
+          <div class="eyebrow"><span>●</span> Made for two</div>
+          <h1>Find the words.<br /><span>Feel closer.</span></h1>
+          <p>A private word game for two people, wherever you are. Keep your call open and let the clues flow.</p>
+          <div class="feature-row" aria-label="Features">
+            <span>Private rooms</span>
+            <span>1,000 words</span>
+            <span>No sign-up</span>
+          </div>
+        </div>
+
+        <div class="card entry-card">
+          <div class="card-heading">
+            <span class="mini-icon">↗</span>
+            <div>
+              <h2 id="entryTitle">Start a game</h2>
+              <p id="entrySubtitle">Create a room and invite your favourite person.</p>
+            </div>
+          </div>
+
+          <form id="createForm" class="stack-form">
+            <label for="createName">Your name</label>
+            <input id="createName" name="name" autocomplete="nickname" maxlength="24" placeholder="e.g. Alex" required />
+            <button class="button button-primary button-large" type="submit">
+              Create private room <span>→</span>
+            </button>
+          </form>
+
+          <div class="divider"><span>or join your partner</span></div>
+
+          <form id="joinForm" class="stack-form compact-form">
+            <label for="joinName">Your name</label>
+            <input id="joinName" name="name" autocomplete="nickname" maxlength="24" placeholder="e.g. Jamie" required />
+            <label for="roomCode">Room code</label>
+            <input id="roomCode" name="roomCode" class="code-input" maxlength="6" placeholder="ABC123" required />
+            <button class="button button-secondary button-large" type="submit">Join room</button>
+          </form>
+          <p class="privacy-note"><span>◇</span> Rooms disappear after everyone leaves.</p>
+        </div>
+      </section>
+
+      <section id="roomView" class="view room-view" hidden>
+        <div class="room-toolbar">
+          <div>
+            <span class="toolbar-label">Private room</span>
+            <strong id="toolbarCode">------</strong>
+          </div>
+          <button id="leaveButton" class="text-button" type="button">Leave room</button>
+        </div>
+
+        <div id="roomContent" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <template id="playerTemplate">
+      <div class="player-row">
+        <div class="avatar"></div>
+        <div class="player-copy">
+          <strong class="player-name"></strong>
+          <span class="player-role"></span>
+        </div>
+        <div class="player-status"><span></span></div>
+      </div>
+    </template>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/app.js" defer></script>
+  </body>
+</html>
