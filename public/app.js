@@ -185,6 +185,7 @@ function renderLobby() {
     option.selected = roomState.settings.roundSeconds === value;
     durationSelect.append(option);
   });
+  durationSelect.value = String(roomState.settings.roundSeconds || 60);
   durationSelect.disabled = !roomState.isHost;
   durationLabel.append(durationSelect);
 
@@ -198,7 +199,21 @@ function renderLobby() {
   });
   roundsSelect.disabled = !roomState.isHost;
   roundsLabel.append(roundsSelect);
-  settingsGrid.append(durationLabel, roundsLabel);
+
+  const difficultyLabel = createElement("label", "", "Word difficulty");
+  const difficultySelect = createElement("select");
+  [
+    ["easy", "Easy"],
+    ["normal", "Normal"],
+  ].forEach(([value, label]) => {
+    const option = createElement("option", "", label);
+    option.value = value;
+    difficultySelect.append(option);
+  });
+  difficultySelect.value = roomState.settings.difficulty || "easy";
+  difficultySelect.disabled = !roomState.isHost;
+  difficultyLabel.append(difficultySelect);
+  settingsGrid.append(durationLabel, roundsLabel, difficultyLabel);
   settingsColumn.append(settingsGrid);
   settingsColumn.append(createElement("p", "settings-note", "Classic scoring: +1 for a correct word and −1 for a skip. The explainer changes every round."));
 
@@ -206,10 +221,12 @@ function renderLobby() {
     emitWithFeedback("update-settings", {
       roundSeconds: Number(durationSelect.value),
       totalRounds: Number(roundsSelect.value),
+      difficulty: difficultySelect.value,
     });
   };
   durationSelect.addEventListener("change", updateSettings);
   roundsSelect.addEventListener("change", updateSettings);
+  difficultySelect.addEventListener("change", updateSettings);
   lobbyGrid.append(playerColumn, settingsColumn);
   card.append(lobbyGrid);
 
@@ -233,7 +250,8 @@ function renderLobby() {
 function addRoundMeta(card) {
   const meta = createElement("div", "round-meta");
   meta.append(createElement("span", "", `Round ${roomState.game.round} of ${roomState.game.totalRounds}`));
-  meta.append(createElement("span", "", `${roomState.settings.roundSeconds}s · Classic score`));
+  const difficulty = roomState.settings.difficulty === "normal" ? "Normal" : "Easy";
+  meta.append(createElement("span", "", `${roomState.settings.roundSeconds}s · ${difficulty}`));
   card.append(meta);
 }
 
@@ -283,7 +301,7 @@ function renderPlaying() {
   const timerWrap = createElement("div", "timer-wrap");
   const timerHead = createElement("div", "timer-head");
   timerHead.append(createElement("span", "", "Time left"));
-  const timerNumber = createElement("strong", "timer-number", "0s");
+  const timerNumber = createElement("strong", "timer-number", `${roomState.settings.roundSeconds || 60}s`);
   timerNumber.id = "timerNumber";
   timerHead.append(timerNumber);
   const timerTrack = createElement("div", "timer-track");

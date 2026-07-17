@@ -14,22 +14,48 @@ const io = new Server(server, {
   maxHttpBufferSize: 100_000,
 });
 
-const WORDS_PATH = path.join(__dirname, "data", "alias_words_1000.csv");
+const WORDS_PATH = path.join(__dirname, "data", "ukrainian_words.csv");
+const DEFAULT_ROUND_SECONDS = 60;
+const DIFFICULTIES = new Set(["easy", "normal"]);
 const publicDirectory = path.join(__dirname, "public");
 const rooms = new Map();
 
+function parseCsvLine(line) {
+  const values = [];
+  let value = "";
+  let quoted = false;
+  for (let index = 0; index < line.length; index += 1) {
+    const character = line[index];
+    if (character === '"' && quoted && line[index + 1] === '"') {
+      value += '"';
+      index += 1;
+    } else if (character === '"') {
+      quoted = !quoted;
+    } else if (character === "," && !quoted) {
+      values.push(value.trim());
+      value = "";
+    } else {
+      value += character;
+    }
+  }
+  values.push(value.trim());
+  return values;
+}
+
 function loadWords() {
   const lines = fs.readFileSync(WORDS_PATH, "utf8").replace(/^\uFEFF/, "").split(/\r?\n/);
-  return lines
+  const words = lines
     .slice(1)
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => {
-      if (line.startsWith('"') && line.endsWith('"')) {
-        return line.slice(1, -1).replace(/""/g, '"');
-      }
-      return line;
+      const [word, difficulty] = parseCsvLine(line);
+      return { word, difficulty };
     });
+  if (words.some(({ word, difficulty }) => !word || !DIFFICULTIES.has(difficulty))) {
+    throw new Error("Every word needs a value and an easy or normal difficulty.");
+  }
+  return words;
 }
 
 const WORDS = loadWords();
@@ -159,12 +185,16 @@ function emitRoomState(room) {
 
 function nextWord(room) {
   if (room.game.deckIndex >= room.game.deck.length) {
-    room.game.deck = shuffle(WORDS);
+    room.game.deck = makeDeck(room.settings.difficulty);
     room.game.deckIndex = 0;
   }
   const word = room.game.deck[room.game.deckIndex];
   room.game.deckIndex += 1;
   return word;
+}
+
+function makeDeck(difficulty) {
+  return shuffle(WORDS.filter((entry) => entry.difficulty === difficulty).map((entry) => entry.word));
 }
 
 function endRound(room) {
@@ -253,7 +283,7 @@ io.on("connection", (socket) => {
       lastActiveAt: Date.now(),
       cleanupTimer: null,
       phase: "lobby",
-      settings: { roundSeconds: 60, totalRounds: 6 },
+      settings: { roundSeconds: DEFAULT_ROUND_SECONDS, totalRounds: 6, difficulty: "easy" },
       players: [player],
       game: null,
     };
@@ -309,8 +339,10 @@ io.on("connection", (socket) => {
 
     const roundSeconds = Number(payload?.roundSeconds);
     const totalRounds = Number(payload?.totalRounds);
+    const difficulty = String(payload?.difficulty || "");
     if ([30, 45, 60, 90].includes(roundSeconds)) room.settings.roundSeconds = roundSeconds;
     if ([4, 6, 8, 10].includes(totalRounds)) room.settings.totalRounds = totalRounds;
+    if (DIFFICULTIES.has(difficulty)) room.settings.difficulty = difficulty;
     callback({ ok: true });
     emitRoomState(room);
   });
@@ -337,7 +369,7 @@ io.on("connection", (socket) => {
       currentWord: null,
       endsAt: null,
       lastRound: null,
-      deck: shuffle(WORDS),
+      deck: makeDeck(room.settings.difficulty),
       deckIndex: 0,
       timer: null,
     };
@@ -436,5 +468,5 @@ io.on("connection", (socket) => {
 
 server.listen(PORT, () => {
   console.log(`ClueWave is running at http://localhost:${PORT}`);
-  console.log(`Loaded ${WORDS.length} English words.`);
+  console.log(`Loaded ${WORDS.length} Ukrainian words.`);
 });

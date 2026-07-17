@@ -1,6 +1,6 @@
 # ClueWave
 
-ClueWave is a small real-time word guessing game for two people on separate devices. Keep a voice or video call open, create a private room, share its link, and take turns explaining English words.
+ClueWave is a small real-time word guessing game for two people on separate devices. Keep a voice or video call open, create a private room, share its link, and take turns explaining Ukrainian words.
 
 ## First prototype
 
@@ -8,12 +8,12 @@ ClueWave is a small real-time word guessing game for two people on separate devi
 - Exactly two players per room
 - Real-time game state with Socket.IO
 - Secret words sent only to the current explainer
-- 1,000 English words from the supplied prototype deck
+- Ukrainian word deck with Easy and Normal difficulty levels
 - 30, 45, 60, or 90 second rounds
 - Four to ten alternating rounds
 - Classic scoring: +1 correct, -1 skipped
 - Reconnection support and automatic room cleanup
-- Responsive English interface for phones and laptops
+- Responsive English interface for phones and laptops, with Ukrainian game words
 
 Rooms and scores are currently stored in server memory. Restarting the server clears active rooms, which is appropriate for this prototype.
 
