@@ -162,6 +162,7 @@ function publicStateFor(room, player) {
         roundCorrect: room.game.roundCorrect,
         roundSkipped: room.game.roundSkipped,
         roundDelta: room.game.roundCorrect - room.game.roundSkipped,
+        timerExpired: room.game.timerExpired,
         remainingMs: room.game.endsAt ? Math.max(0, room.game.endsAt - Date.now()) : null,
         lastRound: room.game.lastRound,
         word: room.phase === "playing" && isExplainer ? room.game.currentWord : null,
@@ -233,8 +234,15 @@ function endRound(room) {
 
 function startRoundTimer(room) {
   const duration = room.settings.roundSeconds * 1000;
+  room.game.timerExpired = false;
   room.game.endsAt = Date.now() + duration;
-  room.game.timer = setTimeout(() => endRound(room), duration + 100);
+  room.game.timer = setTimeout(() => {
+    if (!room.game || room.phase !== "playing") return;
+    room.game.timer = null;
+    room.game.timerExpired = true;
+    room.game.endsAt = null;
+    emitRoomState(room);
+  }, duration + 100);
 }
 
 function attachPlayerToSocket(socket, room, player) {
@@ -386,6 +394,7 @@ io.on("connection", (socket) => {
       roundSkipped: 0,
       currentWord: null,
       endsAt: null,
+      timerExpired: false,
       lastRound: null,
       deck: makeDeck(room.settings.wordMode),
       deckIndex: 0,
@@ -408,6 +417,7 @@ io.on("connection", (socket) => {
     room.game.roundCorrect = 0;
     room.game.roundSkipped = 0;
     room.game.lastRound = null;
+    room.game.timerExpired = false;
     room.game.currentWord = nextWord(room);
     room.phase = "playing";
     startRoundTimer(room);
@@ -437,7 +447,34 @@ io.on("connection", (socket) => {
       return callback({ ok: false, error: "Unknown scoring action." });
     }
 
+    callback({ ok: true });
+    if (room.game.timerExpired) {
+      endRound(room);
+      return;
+    }
     room.game.currentWord = nextWord(room);
+    emitRoomState(room);
+  });
+
+  socket.on("adjust-round-result", (payload, callback = () => {}) => {
+    const room = rooms.get(socket.data.roomCode);
+    if (!room || !room.game?.lastRound) return callback({ ok: false, error: "Round result not found." });
+    if (room.phase !== "round_result") return callback({ ok: false, error: "Results can only be edited before the next round." });
+
+    const field = payload?.field;
+    const delta = Number(payload?.delta);
+    if (!["correct", "skipped"].includes(field) || ![-1, 1].includes(delta)) {
+      return callback({ ok: false, error: "Unknown result adjustment." });
+    }
+
+    const result = room.game.lastRound;
+    if (result[field] + delta < 0) return callback({ ok: false, error: "The result cannot be negative." });
+    const explainer = getExplainer(room);
+    result[field] += delta;
+    room.game[field === "correct" ? "roundCorrect" : "roundSkipped"] = result[field];
+    explainer[field] += delta;
+    explainer.score += field === "correct" ? delta : -delta;
+    result.delta = result.correct - result.skipped;
     callback({ ok: true });
     emitRoomState(room);
   });
@@ -458,6 +495,7 @@ io.on("connection", (socket) => {
       room.game.roundSkipped = 0;
       room.game.currentWord = null;
       room.game.endsAt = null;
+      room.game.timerExpired = false;
       room.phase = "round_intro";
     }
     callback({ ok: true });

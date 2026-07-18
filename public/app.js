@@ -303,18 +303,21 @@ function updateTimer() {
 function renderPlaying() {
   const card = createGameCard("round-card");
   addRoundMeta(card);
+  const isFinalWord = roomState.game.timerExpired;
 
   const timerWrap = createElement("div", "timer-wrap");
   const timerHead = createElement("div", "timer-head");
-  timerHead.append(createElement("span", "", "Time left"));
-  const timerNumber = createElement("strong", "timer-number", `${roomState.settings.roundSeconds || 60}s`);
+  timerHead.append(createElement("span", "", isFinalWord ? "Final word" : "Time left"));
+  const timerNumber = createElement("strong", "timer-number", isFinalWord ? "No limit" : `${roomState.settings.roundSeconds || 60}s`);
   timerNumber.id = "timerNumber";
   timerHead.append(timerNumber);
-  const timerTrack = createElement("div", "timer-track");
+  const timerTrack = createElement("div", `timer-track${isFinalWord ? " is-expired" : ""}`);
   const timerFill = createElement("div", "timer-fill");
   timerFill.id = "timerFill";
+  if (isFinalWord) timerFill.style.transform = "scaleX(0)";
   timerTrack.append(timerFill);
   timerWrap.append(timerHead, timerTrack);
+  if (isFinalWord) timerWrap.append(createElement("p", "final-word-note", "Finish this word — take as much time as you need."));
   card.append(timerWrap);
 
   const scoreStrip = createElement("div", "score-strip");
@@ -347,8 +350,10 @@ function renderPlaying() {
 
   roomContent.replaceChildren(card);
   clearInterval(countdownInterval);
-  updateTimer();
-  countdownInterval = setInterval(updateTimer, 100);
+  if (!isFinalWord) {
+    updateTimer();
+    countdownInterval = setInterval(updateTimer, 100);
+  }
 }
 
 function scoreWord(button, action) {
@@ -365,17 +370,29 @@ function renderRoundResult() {
   addRoundMeta(card);
   const result = roomState.game.lastRound;
   const isLastRound = roomState.game.round >= roomState.game.totalRounds;
-  addHeading(card, "Time", `${result.explainerName}'s round is done`, isLastRound ? "That was the final round. One more tap reveals the result." : "Nice work. Take a breath, then switch roles for the next round.");
+  addHeading(card, "Round complete", `${result.explainerName}'s round is done`, isLastRound ? "Check the tally, then reveal the final result." : "Check the tally and fix any mistakes before the next round.");
 
   const resultGrid = createElement("div", "result-grid");
   [
-    ["Correct", result.correct, "positive"],
-    ["Skipped", result.skipped, "negative"],
-    ["Round score", result.delta > 0 ? `+${result.delta}` : result.delta, result.delta >= 0 ? "positive" : "negative"],
-  ].forEach(([label, value, modifier]) => {
+    ["Correct", result.correct, "positive", "correct"],
+    ["Skipped", result.skipped, "negative", "skipped"],
+    ["Round score", result.delta > 0 ? `+${result.delta}` : result.delta, result.delta >= 0 ? "positive" : "negative", null],
+  ].forEach(([label, value, modifier, field]) => {
     const stat = createElement("div", `result-stat ${modifier}`);
     stat.append(createElement("span", "", label));
     stat.append(createElement("strong", "", String(value)));
+    if (field) {
+      const controls = createElement("div", "result-controls");
+      [-1, 1].forEach((delta) => {
+        const button = createElement("button", "result-step", delta < 0 ? "−" : "+");
+        button.type = "button";
+        button.setAttribute("aria-label", `${delta < 0 ? "Decrease" : "Increase"} ${label.toLowerCase()}`);
+        button.disabled = delta < 0 && Number(value) === 0;
+        button.addEventListener("click", () => adjustRoundResult(button, field, delta));
+        controls.append(button);
+      });
+      stat.append(controls);
+    }
     resultGrid.append(stat);
   });
   card.append(resultGrid);
@@ -395,6 +412,14 @@ function renderRoundResult() {
   }
   card.append(actions);
   roomContent.replaceChildren(card);
+}
+
+function adjustRoundResult(button, field, delta) {
+  const buttons = document.querySelectorAll(".result-step");
+  buttons.forEach((candidate) => { candidate.disabled = true; });
+  emitWithFeedback("adjust-round-result", { field, delta }, (result) => {
+    if (!result?.ok) buttons.forEach((candidate) => { candidate.disabled = false; });
+  });
 }
 
 function renderFinished() {

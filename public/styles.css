@@ -740,6 +740,17 @@ select:focus {
   transition: transform 100ms linear;
 }
 
+.timer-track.is-expired {
+  background: #dbe9f8;
+}
+
+.final-word-note {
+  margin: 10px 0 0;
+  color: var(--blue-dark);
+  font-size: 12px;
+  font-weight: 750;
+}
+
 .score-strip {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -864,6 +875,38 @@ select:focus {
   display: block;
   margin-top: 7px;
   font-size: 30px;
+}
+
+.result-controls {
+  display: flex;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.result-step {
+  display: grid;
+  width: 34px;
+  height: 30px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid #cbdff4;
+  border-radius: 10px;
+  color: var(--blue-dark);
+  background: white;
+  font-size: 18px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.result-step:hover:not(:disabled) {
+  border-color: #83bfff;
+  background: #eef7ff;
+}
+
+.result-step:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
 }
 
 .result-stat.positive strong { color: var(--success); }
@@ -1069,6 +1112,14 @@ select:focus {
 
   .play-actions .button {
     padding: 0 12px;
+  }
+
+  .result-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .result-stat:last-child {
+    grid-column: 1 / -1;
   }
 
   .word-card span {

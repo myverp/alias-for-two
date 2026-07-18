@@ -12,6 +12,8 @@ ClueWave is a small real-time word guessing game for two people on separate devi
 - 30, 60, or 90 second rounds
 - Four to ten alternating rounds
 - Classic scoring: +1 correct, -1 skipped
+- Unlimited time to finish the final word after the timer reaches zero
+- Editable correct and skipped totals before the next round
 - Reconnection support and automatic room cleanup
 - Responsive English interface for phones and laptops
 
