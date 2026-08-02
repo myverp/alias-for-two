@@ -515,6 +515,73 @@ select:focus {
   gap: 28px;
 }
 
+.game-picker {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 9px;
+  margin: 0 0 30px;
+}
+
+.game-option {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+  padding: 13px 9px;
+  border: 1px solid #dce9f7;
+  border-radius: 16px;
+  color: var(--ink);
+  background: #fbfdff;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.game-option:hover:not(:disabled) {
+  border-color: #9dcaff;
+  transform: translateY(-1px);
+}
+
+.game-option.selected {
+  border-color: #77b8ff;
+  background: #eef7ff;
+  box-shadow: inset 0 0 0 1px rgba(22, 119, 255, 0.08);
+}
+
+.game-option:disabled {
+  cursor: default;
+  opacity: 0.82;
+}
+
+.game-option-icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 11px;
+  color: white;
+  background: linear-gradient(145deg, #69b8ff, #227be8);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.game-option-copy {
+  display: grid;
+  min-width: 0;
+}
+
+.game-option-copy strong {
+  font-size: 12px;
+}
+
+.game-option-copy small {
+  display: none;
+}
+
+.lobby-grid-games {
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
 .subsection-title {
   margin: 0 0 14px;
   color: #617898;
@@ -808,6 +875,284 @@ select:focus {
   line-height: 1.08;
 }
 
+.taboo-card {
+  align-content: center;
+  gap: 10px;
+}
+
+.prompt-label {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.forbidden-label {
+  margin-top: 5px;
+  color: #c25d68;
+}
+
+.forbidden-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 7px;
+}
+
+.forbidden-list b {
+  padding: 7px 10px;
+  border-radius: 999px;
+  color: #a84a57;
+  background: #fff0f2;
+  font-size: 12px;
+}
+
+.game-input-form {
+  display: grid;
+  width: min(470px, 100%);
+  gap: 14px;
+  margin: 28px auto 0;
+  text-align: left;
+}
+
+.game-input-form label {
+  display: grid;
+  gap: 7px;
+}
+
+.clue-pill {
+  width: min(460px, 100%);
+  margin: 24px auto 4px;
+  padding: 25px;
+  border: 1px solid #b9d8fa;
+  border-radius: 24px;
+  color: var(--blue-dark);
+  background: #eef7ff;
+  font-size: clamp(30px, 7vw, 48px);
+  font-weight: 900;
+}
+
+.secret-reminder {
+  width: min(460px, 100%);
+  margin: 22px auto 0;
+  padding: 13px 16px;
+  border-radius: 14px;
+  color: var(--blue-dark);
+  background: #f1f7fe;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.identity-card {
+  display: grid;
+  width: min(510px, 100%);
+  gap: 8px;
+  margin: 15px auto 0;
+  padding: 30px 22px;
+  border: 1px solid #bcdafb;
+  border-radius: 25px;
+  background: linear-gradient(145deg, #ffffff, #eef7ff);
+}
+
+.identity-card small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.identity-card strong {
+  font-size: clamp(28px, 6vw, 46px);
+  letter-spacing: -0.035em;
+}
+
+.answer-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  width: min(510px, 100%);
+  gap: 10px;
+  margin: 25px auto 0;
+}
+
+.answer-buttons .button {
+  min-height: 52px;
+}
+
+.who-finish {
+  margin-top: 12px;
+}
+
+.last-answer {
+  display: grid;
+  min-height: 180px;
+  width: min(510px, 100%);
+  margin: 28px auto 0;
+  place-items: center;
+  border-radius: 26px;
+  color: white;
+  background: #8ba2bd;
+  font-size: clamp(28px, 8vw, 55px);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+
+.last-answer.yes { background: linear-gradient(145deg, #5ec9a2, #28a97c); }
+.last-answer.no { background: linear-gradient(145deg, #f28b96, #d95362); }
+.last-answer.maybe { background: linear-gradient(145deg, #84bfff, #388be7); }
+.last-answer.waiting { font-size: 13px; }
+
+.categories-card {
+  min-height: 700px;
+}
+
+.categories-card .timer-wrap {
+  margin-bottom: 18px;
+}
+
+.category-challenge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.category-challenge small {
+  color: var(--muted);
+  font-weight: 750;
+}
+
+.category-challenge strong {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  border-radius: 17px;
+  color: white;
+  background: linear-gradient(145deg, #62b4ff, #1875e7);
+  font-size: 28px;
+}
+
+.category-form {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  width: min(600px, 100%);
+  gap: 13px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.category-form label {
+  display: grid;
+  gap: 6px;
+}
+
+.category-form button {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+}
+
+.category-review-card {
+  position: relative;
+  padding: clamp(24px, 5vw, 48px);
+  text-align: center;
+}
+
+.category-review-card .section-subtitle {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.category-review-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-top: 28px;
+}
+
+.category-player-column {
+  display: grid;
+  align-content: start;
+  gap: 9px;
+}
+
+.category-player-column h2 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+.category-answer {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 3px 10px;
+  padding: 12px 13px;
+  border: 1px solid #d8e6f5;
+  border-radius: 14px;
+  background: #f9fcff;
+  text-align: left;
+}
+
+.category-answer:not(:disabled) { cursor: pointer; }
+.category-answer.accepted { border-color: #9edbc5; background: #f0fbf7; }
+.category-answer.rejected { border-color: #edc8ce; background: #fff7f8; }
+
+.category-answer small {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.category-answer strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-answer span {
+  color: var(--success);
+  font-weight: 900;
+}
+
+.category-answer.rejected span { color: var(--danger); }
+
+.reveal-card {
+  display: grid;
+  width: min(500px, 100%);
+  gap: 7px;
+  margin: 30px auto 0;
+  padding: 27px 22px;
+  border: 1px solid #e4ced2;
+  border-radius: 22px;
+  background: #fff8f9;
+}
+
+.reveal-card.positive {
+  border-color: #a8dfca;
+  background: #f2fbf8;
+}
+
+.reveal-card small {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.reveal-card strong {
+  font-size: clamp(27px, 6vw, 43px);
+}
+
+.reveal-card span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .listen-visual {
   display: flex;
   align-items: center;
@@ -1031,6 +1376,10 @@ select:focus {
   .lobby-grid {
     grid-template-columns: 1fr;
   }
+
+  .game-picker {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 @media (max-width: 540px) {
@@ -1087,6 +1436,14 @@ select:focus {
     grid-template-columns: 1fr;
   }
 
+  .game-picker {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .game-option:last-child {
+    grid-column: 1 / -1;
+  }
+
   .round-card {
     min-height: 610px;
     padding-top: 80px;
@@ -1124,5 +1481,19 @@ select:focus {
 
   .word-card span {
     font-size: clamp(30px, 11vw, 46px);
+  }
+
+  .category-form,
+  .category-review-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .answer-buttons {
+    gap: 7px;
+  }
+
+  .answer-buttons .button {
+    padding: 0 8px;
+    font-size: 13px;
   }
 }

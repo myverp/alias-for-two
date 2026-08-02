@@ -2,7 +2,7 @@
   "name": "alias-for-two",
   "version": "0.1.0",
   "private": true,
-  "description": "A private real-time word guessing game for two people.",
+  "description": "Five private real-time party games for two people.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

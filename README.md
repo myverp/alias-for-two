@@ -1,13 +1,21 @@
 # ClueWave
 
-ClueWave is a small real-time word guessing game for two people on separate devices. Keep a voice or video call open, create a private room, share its link, and take turns explaining English or Ukrainian words.
+ClueWave is a small real-time game collection for two people on separate devices. Keep a voice or video call open, create a private room, share its link, and choose a game.
 
-## First prototype
+## Games
+
+- Alias — explain timed English or Ukrainian words
+- Taboo — explain an English target without five forbidden words
+- Password — exchange one-word clues with up to five guesses
+- Categories — answer four prompts with the same starting letter and review scoring together
+- Who Am I? — ask up to twenty yes-or-no questions to find an identity
+
+## Prototype features
 
 - Private six-character room codes and shareable links
 - Exactly two players per room
 - Real-time game state with Socket.IO
-- Secret words sent only to the current explainer
+- Secret prompts sent only to the player who should see them
 - Three word modes: English Easy, English Medium, and mixed-difficulty Ukrainian
 - 30, 60, or 90 second rounds
 - Four to ten alternating rounds
